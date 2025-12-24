@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                        STEWARD STACK v1.0                                    ║
+║        Planetary Monitoring Dashboard - 7-Index System                       ║
+║                                                                              ║
+║  ZERO-HARM COMMITMENT: No data transmitted externally. All analytics        ║
+║  local-only, transparent, user-resettable. No secrets/tokens/telemetry.     ║
+║                                                                              ║
+║  ANTI-INVERSION PRINCIPLE: This tool exists to REDUCE harm. Features        ║
+║  that could be repurposed for coercion have been intentionally removed.     ║
+║                                                                              ║
+║  Licensed under MIT - See Attributions section.                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Steward Stack: 7-Index Planetary Monitoring Dashboard">
+<title>Steward Stack | Planetary Monitoring Dashboard</title>
+<style>
+/* ══════════ CSS VARIABLES & THEMES ══════════ */
+:root{--font-primary:'Segoe UI',system-ui,sans-serif;--font-mono:'Consolas',monospace;--font-display:Georgia,serif;--space-xs:0.25rem;--space-sm:0.5rem;--space-md:1rem;--space-lg:2rem;--space-xl:4rem;--transition-fast:150ms ease;--transition-medium:300ms ease;--z-sticky:200;--z-modal:1000;--z-splash:9999}
+[data-theme="dark"]{--color-bg-primary:#0a1628;--color-bg-secondary:#132039;--color-bg-tertiary:#1a2d4d;--color-bg-card:rgba(26,45,77,0.7);--color-text-primary:#e8edf5;--color-text-secondary:#9db4d4;--color-text-muted:#5a7294;--color-accent-primary:#3b82f6;--color-accent-secondary:#10b981;--color-accent-warning:#f59e0b;--color-accent-danger:#ef4444;--color-accent-info:#06b6d4;--color-border:rgba(157,180,212,0.15);--color-glass:rgba(10,22,40,0.85);--shadow-lg:0 8px 32px rgba(0,0,0,0.5);--shadow-glow:0 0 20px rgba(59,130,246,0.3)}
+[data-theme="light"]{--color-bg-primary:#f8fafc;--color-bg-secondary:#ffffff;--color-bg-tertiary:#e2e8f0;--color-bg-card:rgba(255,255,255,0.9);--color-text-primary:#0f172a;--color-text-secondary:#475569;--color-text-muted:#94a3b8;--color-accent-primary:#2563eb;--color-accent-secondary:#059669;--color-accent-warning:#d97706;--color-accent-danger:#dc2626;--color-accent-info:#0891b2;--color-border:rgba(15,23,42,0.1);--color-glass:rgba(248,250,252,0.9);--shadow-lg:0 8px 32px rgba(0,0,0,0.15);--shadow-glow:0 0 20px rgba(37,99,235,0.2)}
+
+/* ══════════ RESET & BASE ══════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font-primary);background:var(--color-bg-primary);color:var(--color-text-primary);line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+/* ══════════ SPLASH SCREEN ══════════ */
+.splash-screen{position:fixed;inset:0;z-index:var(--z-splash);display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1628 0%,#1a2d4d 50%,#0a1628 100%);transition:opacity 0.8s ease,visibility 0.8s ease}
+.splash-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.splash-logo{width:120px;height:120px;position:relative;margin-bottom:var(--space-lg)}
+.splash-globe{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#10b981 0%,#3b82f6 50%,#8b5cf6 100%);position:relative;animation:globePulse 2s ease-in-out infinite;box-shadow:0 0 60px rgba(59,130,246,0.4),inset 0 0 30px rgba(255,255,255,0.1)}
+.splash-globe::before{content:'';position:absolute;inset:10%;border-radius:50%;border:2px solid rgba(255,255,255,0.3);animation:orbitRing 3s linear infinite}
+.splash-globe::after{content:'';position:absolute;top:15%;left:20%;width:25%;height:15%;background:rgba(255,255,255,0.4);border-radius:50%;filter:blur(5px)}
+@keyframes globePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes orbitRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.splash-title{font-family:var(--font-display);font-size:2.5rem;font-weight:400;letter-spacing:0.2em;text-transform:uppercase;background:linear-gradient(90deg,#10b981,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:var(--space-sm)}
+.splash-subtitle{font-size:0.9rem;color:var(--color-text-muted);letter-spacing:0.3em;text-transform:uppercase;margin-bottom:var(--space-xl)}
+.splash-progress{width:200px;height:3px;background:var(--color-bg-tertiary);border-radius:2px;overflow:hidden}
+.splash-progress-bar{height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:2px;width:0%;transition:width 0.3s ease}
+.splash-status{margin-top:var(--space-md);font-size:0.75rem;color:var(--color-text-muted);font-family:var(--font-mono)}
+
+/* ══════════ NAVIGATION ══════════ */
+.main-nav{position:sticky;top:0;z-index:var(--z-sticky);background:var(--color-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--color-border);padding:var(--space-sm) var(--space-lg)}
+.nav-container{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap}
+.nav-brand{display:flex;align-items:center;gap:var(--space-sm);text-decoration:none;color:var(--color-text-primary)}
+.nav-brand-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#10b981,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:1rem}
+.nav-brand-text{font-family:var(--font-display);font-size:1.1rem;font-weight:600;letter-spacing:0.05em}
+.nav-search{flex:1;max-width:400px;position:relative}
+.nav-search-input{width:100%;padding:var(--space-sm) var(--space-md);padding-left:2.5rem;background:var(--color-bg-tertiary);border:1px solid var(--color-border);border-radius:8px;color:var(--color-text-primary);font-size:0.9rem;transition:var(--transition-fast)}
+.nav-search-input:focus{outline:none;border-color:var(--color-accent-primary);box-shadow:var(--shadow-glow)}
+.nav-search-icon{position:absolute;left:var(--space-sm);top:50%;transform:translateY(-50%);color:var(--color-text-muted)}
+.nav-search-results{position:absolute;top:100%;left:0;right:0;background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:8px;margin-top:var(--space-xs);max-height:300px;overflow-y:auto;display:none;box-shadow:var(--shadow-lg)}
+.nav-search-results.active{display:block}
+.search-result-item{padding:var(--space-sm) var(--space-md);cursor:pointer;border-bottom:1px solid var(--color-border);transition:var(--transition-fast)}
+.search-result-item:hover{background:var(--color-bg-tertiary)}
+.nav-controls{display:flex;align-items:center;gap:var(--space-sm)}
+.nav-btn{padding:var(--space-xs) var(--space-sm);background:transparent;border:1px solid var(--color-border);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.85rem;display:flex;align-items:center;gap:var(--space-xs);transition:var(--transition-fast)}
+.nav-btn:hover{background:var(--color-bg-tertiary);color:var(--color-text-primary);border-color:var(--color-accent-primary)}
+.lang-selector{position:relative}
+.lang-dropdown{position:absolute;top:100%;right:0;background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:8px;padding:var(--space-sm);min-width:200px;max-height:300px;overflow-y:auto;display:none;box-shadow:var(--shadow-lg);z-index:100}
+.lang-dropdown.active{display:block}
+.lang-option{padding:var(--space-xs) var(--space-sm);cursor:pointer;border-radius:4px;transition:var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+.lang-option:hover{background:var(--color-bg-tertiary)}
+.lang-option.selected{background:var(--color-accent-primary);color:white}
+
+/* ══════════ GAMIFICATION HUD ══════════ */
+.gamification-hud{position:fixed;top:80px;right:var(--space-md);z-index:var(--z-sticky);background:var(--color-glass);backdrop-filter:blur(20px);border:1px solid var(--color-border);border-radius:12px;padding:var(--space-md);width:260px;box-shadow:var(--shadow-lg);transition:transform var(--transition-medium)}
+.gamification-hud.collapsed{transform:translateX(calc(100% + var(--space-md)))}
+.hud-toggle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);width:32px;height:32px;background:var(--color-bg-tertiary);border:1px solid var(--color-border);border-radius:8px 0 0 8px;color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hud-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-md)}
+.hud-title{font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-text-secondary)}
+.hud-level{display:flex;align-items:center;gap:var(--space-xs);background:linear-gradient(135deg,#10b981,#3b82f6);padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;color:white}
+.hud-xp-bar{height:6px;background:var(--color-bg-tertiary);border-radius:3px;overflow:hidden;margin-bottom:var(--space-sm)}
+.hud-xp-fill{height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:3px;transition:width var(--transition-medium)}
+.hud-xp-text{font-size:0.65rem;color:var(--color-text-muted);text-align:center;margin-bottom:var(--space-md)}
+.hud-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-sm);margin-bottom:var(--space-md)}
+.hud-stat{background:var(--color-bg-tertiary);padding:var(--space-sm);border-radius:8px;text-align:center}
+.hud-stat-value{font-size:1.1rem;font-weight:700;color:var(--color-accent-primary)}
+.hud-stat-label{font-size:0.6rem;color:var(--color-text-muted);text-transform:uppercase}
+.hud-achievements{border-top:1px solid var(--color-border);padding-top:var(--space-sm)}
+.hud-achievements-title{font-size:0.7rem;color:var(--color-text-muted);margin-bottom:var(--space-sm)}
+.achievement-list{display:flex;gap:var(--space-xs);flex-wrap:wrap}
+.achievement-badge{width:28px;height:28px;border-radius:50%;background:var(--color-bg-tertiary);display:flex;align-items:center;justify-content:center;font-size:0.8rem;cursor:pointer;transition:var(--transition-fast);position:relative}
+.achievement-badge.unlocked{background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 0 10px rgba(245,158,11,0.5)}
+.achievement-badge.locked{opacity:0.4;filter:grayscale(1)}
+.achievement-badge[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--color-bg-primary);padding:4px 8px;border-radius:4px;font-size:0.65rem;white-space:nowrap;z-index:10}
+
+/* ══════════ CONSTELLATION VISUALIZER ══════════ */
+.constellation-viz{position:fixed;bottom:var(--space-md);left:var(--space-md);z-index:var(--z-sticky);width:180px;height:180px;background:var(--color-glass);backdrop-filter:blur(20px);border:1px solid var(--color-border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.constellation-canvas{width:100%;height:100%}
+.constellation-label{position:absolute;bottom:var(--space-xs);left:50%;transform:translateX(-50%);font-size:0.6rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.1em;background:var(--color-glass);padding:2px 8px;border-radius:4px}
+
+/* ══════════ MAIN CONTENT ══════════ */
+.main-content{max-width:1200px;margin:0 auto;padding:var(--space-lg);padding-right:300px}
+@media(max-width:1024px){.main-content{padding-right:var(--space-lg)}.gamification-hud{display:none}}
+@media(max-width:768px){.constellation-viz{display:none}}
+
+/* ══════════ HERO SECTION ══════════ */
+.hero-section{min-height:50vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;padding:var(--space-xl) var(--space-lg);margin-bottom:var(--space-xl)}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 30%,rgba(16,185,129,0.15) 0%,transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(59,130,246,0.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(139,92,246,0.1) 0%,transparent 60%);z-index:-1}
+.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.5rem);font-weight:400;line-height:1.2;margin-bottom:var(--space-md);background:linear-gradient(135deg,var(--color-text-primary) 0%,var(--color-accent-primary) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:1.1rem;color:var(--color-text-secondary);max-width:600px;margin-bottom:var(--space-lg)}
+.hero-stats{display:flex;gap:var(--space-lg);flex-wrap:wrap;justify-content:center}
+.hero-stat{text-align:center}
+.hero-stat-value{font-size:2rem;font-weight:700;color:var(--color-accent-primary)}
+.hero-stat-label{font-size:0.8rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.1em}
+
+/* ══════════ PARALLAX SECTIONS ══════════ */
+.parallax-section{position:relative;padding:var(--space-xl) 0;margin-bottom:var(--space-xl)}
+.parallax-section::before{content:'';position:absolute;left:-50%;right:-50%;height:1px;top:0;background:linear-gradient(90deg,transparent,var(--color-border),transparent)}
+.section-header{margin-bottom:var(--space-lg)}
+.section-badge{display:inline-block;padding:var(--space-xs) var(--space-sm);background:var(--color-bg-tertiary);border-radius:4px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-accent-primary);margin-bottom:var(--space-sm)}
+.section-title{font-family:var(--font-display);font-size:1.8rem;font-weight:400;margin-bottom:var(--space-sm)}
+.section-description{color:var(--color-text-secondary);max-width:600px}
+
+/* ══════════ INDEX CARDS ══════════ */
+.index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--space-lg)}
+.index-card{background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:16px;padding:var(--space-lg);position:relative;overflow:hidden;transition:var(--transition-medium)}
+.index-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--color-accent-primary)}
+.index-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--index-color-start),var(--index-color-end))}
+.index-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-md)}
+.index-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--index-color-start),var(--index-color-end));display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.index-status{display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-xs)}
+.index-confidence{display:flex;align-items:center;gap:var(--space-xs);font-size:0.65rem;color:var(--color-text-muted)}
+.confidence-dots{display:flex;gap:2px}
+.confidence-dot{width:6px;height:6px;border-radius:50%;background:var(--color-bg-tertiary)}
+.confidence-dot.filled{background:var(--color-accent-secondary)}
+.index-clock{font-size:0.6rem;padding:2px 6px;background:var(--color-bg-tertiary);border-radius:4px;color:var(--color-text-muted)}
+.index-title{font-size:1rem;font-weight:600;margin-bottom:var(--space-xs)}
+.index-abbrev{color:var(--color-accent-primary);font-weight:700}
+.index-description{font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:var(--space-md)}
+.index-score-container{background:var(--color-bg-tertiary);border-radius:12px;padding:var(--space-md);margin-bottom:var(--space-md)}
+.index-score-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm)}
+.index-score-label{font-size:0.7rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.05em}
+.index-score-value{font-size:1.8rem;font-weight:700;font-family:var(--font-mono)}
+.index-score-trend{display:flex;align-items:center;gap:var(--space-xs);font-size:0.75rem}
+.trend-up{color:var(--color-accent-danger)}
+.trend-down{color:var(--color-accent-secondary)}
+.trend-stable{color:var(--color-text-muted)}
+.index-gauge{height:8px;background:var(--color-bg-primary);border-radius:4px;overflow:hidden;position:relative;margin-top:var(--space-sm)}
+.index-gauge-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--index-color-start),var(--index-color-end));transition:width var(--transition-medium)}
+.index-gauge-threshold{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--color-accent-warning);z-index:1}
+.index-tripwire{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:var(--space-sm);margin-bottom:var(--space-md);display:none}
+.index-tripwire.active{display:block;animation:tripwirePulse 2s ease-in-out infinite}
+@keyframes tripwirePulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}
+.tripwire-header{display:flex;align-items:center;gap:var(--space-sm);font-size:0.75rem;font-weight:600;color:var(--color-accent-warning);margin-bottom:var(--space-xs)}
+.tripwire-action{font-size:0.7rem;color:var(--color-text-secondary)}
+.index-reversibility{border-top:1px solid var(--color-border);padding-top:var(--space-md)}
+.reversibility-title{font-size:0.7rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-sm);display:flex;align-items:center;gap:var(--space-xs)}
+.reversibility-item{font-size:0.75rem;color:var(--color-text-secondary);padding:var(--space-xs) 0;display:flex;align-items:flex-start;gap:var(--space-sm)}
+.reversibility-icon{color:var(--color-accent-info);flex-shrink:0}
+
+/* ══════════ COLLAPSIBLE SECTIONS ══════════ */
+.collapsible{border:1px solid var(--color-border);border-radius:12px;margin-bottom:var(--space-md);overflow:hidden}
+.collapsible-header{padding:var(--space-md);background:var(--color-bg-tertiary);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;transition:var(--transition-fast)}
+.collapsible-header:hover{background:var(--color-bg-card)}
+.collapsible-title{font-weight:600;display:flex;align-items:center;gap:var(--space-sm)}
+.collapsible-icon{transition:transform var(--transition-fast)}
+.collapsible.open .collapsible-icon{transform:rotate(180deg)}
+.collapsible-content{max-height:0;overflow:hidden;transition:max-height var(--transition-medium)}
+.collapsible.open .collapsible-content{max-height:2000px}
+.collapsible-body{padding:var(--space-md)}
+
+/* ══════════ DATA TABLES ══════════ */
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table th,.data-table td{padding:var(--space-sm) var(--space-md);text-align:left;border-bottom:1px solid var(--color-border)}
+.data-table th{background:var(--color-bg-tertiary);font-weight:600;color:var(--color-text-secondary);text-transform:uppercase;font-size:0.65rem;letter-spacing:0.05em}
+.data-table tr:hover{background:var(--color-bg-tertiary)}
+
+/* ══════════ FOOTER ══════════ */
+.main-footer{margin-top:var(--space-xl);padding:var(--space-xl) var(--space-lg);background:var(--color-bg-secondary);border-top:1px solid var(--color-border)}
+.footer-container{max-width:1200px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--space-lg);margin-bottom:var(--space-lg)}
+.footer-section h4{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--color-text-muted);margin-bottom:var(--space-md)}
+.footer-section p{font-size:0.8rem;color:var(--color-text-secondary);line-height:1.7}
+.zero-harm-box{background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(59,130,246,0.1));border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:var(--space-md);margin-bottom:var(--space-lg)}
+.zero-harm-title{display:flex;align-items:center;gap:var(--space-sm);font-size:0.85rem;font-weight:600;color:var(--color-accent-secondary);margin-bottom:var(--space-sm)}
+.zero-harm-text{font-size:0.75rem;color:var(--color-text-secondary);line-height:1.6}
+.anti-inversion-box{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:var(--space-md);margin-bottom:var(--space-lg)}
+.anti-inversion-title{display:flex;align-items:center;gap:var(--space-sm);font-size:0.85rem;font-weight:600;color:var(--color-accent-primary);margin-bottom:var(--space-sm)}
+.anti-inversion-text{font-size:0.75rem;color:var(--color-text-secondary);line-height:1.6}
+.attribution-section{border-top:1px solid var(--color-border);padding-top:var(--space-md);font-size:0.7rem;color:var(--color-text-muted)}
+.attribution-section a{color:var(--color-accent-primary);text-decoration:none}
+.footer-copyright{text-align:center;padding-top:var(--space-md);border-top:1px solid var(--color-border);font-size:0.7rem;color:var(--color-text-muted)}
+
+/* ══════════ TOAST NOTIFICATIONS ══════════ */
+.toast-container{position:fixed;bottom:var(--space-lg);right:var(--space-lg);z-index:var(--z-modal);display:flex;flex-direction:column;gap:var(--space-sm)}
+.toast{padding:var(--space-sm) var(--space-md);background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:8px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:var(--space-sm);animation:toastSlideIn 0.3s ease;max-width:320px}
+.toast.success{border-left:3px solid var(--color-accent-secondary)}
+.toast.warning{border-left:3px solid var(--color-accent-warning)}
+.toast.error{border-left:3px solid var(--color-accent-danger)}
+.toast.info{border-left:3px solid var(--color-accent-info)}
+@keyframes toastSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-message{flex:1;font-size:0.8rem}
+.toast-close{background:none;border:none;color:var(--color-text-muted);cursor:pointer;padding:var(--space-xs)}
+
+/* ══════════ MODAL ══════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:var(--z-modal);display:none;align-items:center;justify-content:center;padding:var(--space-lg)}
+.modal-overlay.active{display:flex}
+.modal-content{background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:16px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-header{padding:var(--space-md);border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:1rem;font-weight:600}
+.modal-close{background:none;border:none;color:var(--color-text-muted);cursor:pointer;font-size:1.5rem;line-height:1}
+.modal-body{padding:var(--space-lg)}
+
+/* ══════════ ANALYTICS SECTION ══════════ */
+.analytics-section{background:var(--color-bg-tertiary);border-radius:12px;padding:var(--space-md);margin-bottom:var(--space-md)}
+.analytics-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md)}
+.analytics-title{font-size:0.8rem;font-weight:600}
+.analytics-actions{display:flex;gap:var(--space-sm)}
+.btn-small{padding:var(--space-xs) var(--space-sm);font-size:0.7rem;background:var(--color-bg-secondary);border:1px solid var(--color-border);border-radius:4px;color:var(--color-text-secondary);cursor:pointer;transition:var(--transition-fast)}
+.btn-small:hover{background:var(--color-accent-primary);color:white;border-color:var(--color-accent-primary)}
+.btn-danger{border-color:var(--color-accent-danger);color:var(--color-accent-danger)}
+.btn-danger:hover{background:var(--color-accent-danger);color:white}
+
+/* ══════════ PRINT STYLES ══════════ */
+@media print{.splash-screen,.gamification-hud,.constellation-viz,.main-nav,.toast-container{display:none!important}body{background:white;color:black;font-size:12pt}.main-content{padding:0;max-width:100%}.index-card{break-inside:avoid;page-break-inside:avoid;border:1px solid #ccc;box-shadow:none}}
+
+/* ══════════ ACCESSIBILITY ══════════ */
+:focus-visible{outline:2px solid var(--color-accent-primary);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}
+</style>
+</head>
+<body>
+<!-- NOSCRIPT FALLBACK -->
+<noscript>
+<style>.splash-screen,.gamification-hud,.constellation-viz,.nav-search,.lang-selector{display:none!important}</style>
+<div style="background:#f59e0b;color:#000;padding:1rem;text-align:center"><strong>JavaScript Required:</strong> Core content accessible below, but interactive features are disabled.</div>
+</noscript>
+
+<!-- SPLASH SCREEN -->
+<div class="splash-screen" id="splashScreen">
+    <div class="splash-logo"><div class="splash-globe"></div></div>
+    <h1 class="splash-title">Steward Stack</h1>
+    <p class="splash-subtitle">Planetary Monitoring Dashboard</p>
+    <div class="splash-progress"><div class="splash-progress-bar" id="splashProgress"></div></div>
+    <p class="splash-status" id="splashStatus">Initializing systems...</p>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="main-nav" role="navigation">
+    <div class="nav-container">
+        <a href="#" class="nav-brand"><div class="nav-brand-icon">🌍</div><span class="nav-brand-text" data-i18n="brandName">Steward Stack</span></a>
+        <div class="nav-search" role="search">
+            <span class="nav-search-icon">🔍</span>
+            <input type="search" class="nav-search-input" id="globalSearch" placeholder="Search indices, data, actions..." autocomplete="off">
+            <div class="nav-search-results" id="searchResults"></div>
+        </div>
+        <div class="nav-controls">
+            <button class="nav-btn" id="themeToggle"><span id="themeIcon">🌙</span> <span data-i18n="theme">Theme</span></button>
+            <div class="lang-selector">
+                <button class="nav-btn" id="langToggle">🌐 <span id="currentLang">EN</span></button>
+                <div class="lang-dropdown" id="langDropdown"></div>
+            </div>
+            <button class="nav-btn" id="settingsBtn">⚙️ <span data-i18n="settings">Settings</span></button>
+            <button class="nav-btn" id="refreshBtn">🔄 <span data-i18n="refresh">Refresh</span></button>
+        </div>
+    </div>
+</nav>
+
+<!-- GAMIFICATION HUD -->
+<aside class="gamification-hud" id="gamificationHud">
+    <button class="hud-toggle" id="hudToggle">◀</button>
+    <div class="hud-header">
+        <span class="hud-title" data-i18n="stewardProgress">Steward Progress</span>
+        <span class="hud-level" id="hudLevel">Lv. 1</span>
+    </div>
+    <div class="hud-xp-bar"><div class="hud-xp-fill" id="hudXpFill" style="width:0%"></div></div>
+    <div class="hud-xp-text" id="hudXpText">0 / 100 XP</div>
+    <div class="hud-stats">
+        <div class="hud-stat"><div class="hud-stat-value" id="statViews">0</div><div class="hud-stat-label">Views</div></div>
+        <div class="hud-stat"><div class="hud-stat-value" id="statActions">0</div><div class="hud-stat-label">Actions</div></div>
+        <div class="hud-stat"><div class="hud-stat-value" id="statDays">0</div><div class="hud-stat-label">Streak</div></div>
+        <div class="hud-stat"><div class="hud-stat-value" id="statTripwires">0</div><div class="hud-stat-label">Tripwires</div></div>
+    </div>
+    <div class="hud-achievements">
+        <div class="hud-achievements-title">Achievements</div>
+        <div class="achievement-list" id="achievementList"></div>
+    </div>
+</aside>
+
+<!-- CONSTELLATION VISUALIZER -->
+<aside class="constellation-viz">
+    <canvas class="constellation-canvas" id="constellationCanvas"></canvas>
+    <span class="constellation-label" data-i18n="systemState">System State</span>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" role="main">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-bg"></div>
+        <h1 class="hero-title" data-i18n="heroTitle">Planetary Stewardship Dashboard</h1>
+        <p class="hero-subtitle" data-i18n="heroSubtitle">Seven high-signal indices for monitoring Earth's vital systems. Minimal metrics, maximum insight. Designed for action, not decoration.</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="hero-stat-value">7</div><div class="hero-stat-label">Core Indices</div></div>
+            <div class="hero-stat"><div class="hero-stat-value" id="lastUpdate">--</div><div class="hero-stat-label">Last Updated</div></div>
+            <div class="hero-stat"><div class="hero-stat-value" id="alertCount">0</div><div class="hero-stat-label">Active Tripwires</div></div>
+        </div>
+    </section>
+
+    <!-- Weekly Indices Section -->
+    <section class="parallax-section">
+        <div class="section-header">
+            <span class="section-badge">Weekly Monitoring</span>
+            <h2 class="section-title">High-Frequency Indices</h2>
+            <p class="section-description">Indices requiring weekly attention due to rapid change dynamics or immediate action potential.</p>
+        </div>
+        <div class="index-grid" id="weeklyIndices">
+            <!-- FSRI Card -->
+            <article class="index-card" style="--index-color-start:#ef4444;--index-color-end:#f97316" data-index="fsri">
+                <div class="index-header">
+                    <div class="index-icon">🔥</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot"></span></div></div>
+                        <span class="index-clock">Weekly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">FSRI</span> - Fire & Smoke Risk Index</h3>
+                <p class="index-description">Tracks seasonal fire outlook, regional fire danger ratings, and smoke days. Directs prevention resources and community readiness efforts.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Current Score</span><div class="index-score-value" id="fsriScore">--</div></div>
+                    <div class="index-score-trend trend-up" id="fsriTrend">↑ Increasing</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="fsriGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:70%"></div></div>
+                </div>
+                <div class="index-tripwire" id="fsriTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Auto-activating 7-day prevention sprint: ember-proofing, defensible space support, air filtration kits, vulnerable neighbor check-ins.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would lower score: Significant precipitation, cooler temperatures, successful fuel reduction</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Community defensible space days, ember-resistant vent installation</span></div>
+                </div>
+            </article>
+            <!-- CFI Card -->
+            <article class="index-card" style="--index-color-start:#8b5cf6;--index-color-end:#a855f7" data-index="cfi">
+                <div class="index-header">
+                    <div class="index-icon">💻</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot"></span><span class="confidence-dot"></span></div></div>
+                        <span class="index-clock">Weekly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">CFI</span> - Compute Footprint Index</h3>
+                <p class="index-description">Tracks AI/data workload energy source mix, water stress region impact, and estimated CO₂e. Prevents planetary tooling from becoming planetary load.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Current Score</span><div class="index-score-value" id="cfiScore">--</div></div>
+                    <div class="index-score-trend trend-stable" id="cfiTrend">→ Stable</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="cfiGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:60%"></div></div>
+                </div>
+                <div class="index-tripwire" id="cfiTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Initiating compute optimization review: workload scheduling, renewable sourcing, efficiency audit.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would lower score: Shift to renewable-powered regions, workload optimization</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Time-shift non-urgent workloads to low-carbon grid periods</span></div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Quarterly Indices Section -->
+    <section class="parallax-section">
+        <div class="section-header">
+            <span class="section-badge">Quarterly Monitoring</span>
+            <h2 class="section-title">Strategic Indices</h2>
+            <p class="section-description">Indices with slower dynamics requiring quarterly assessment for trend analysis and strategic planning.</p>
+        </div>
+        <div class="index-grid" id="quarterlyIndices">
+            <!-- HEI Card -->
+            <article class="index-card" style="--index-color-start:#ef4444;--index-color-end:#dc2626" data-index="hei">
+                <div class="index-header">
+                    <div class="index-icon">🌡️</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span></div></div>
+                        <span class="index-clock">Quarterly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">HEI</span> - Heat & Energy Imbalance Index</h3>
+                <p class="index-description">Tracks global temperature anomaly and Earth's energy imbalance proxy. Anticipates stress on oceans, storms, and cryosphere systems.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Anomaly (°C)</span><div class="index-score-value" id="heiScore">--</div></div>
+                    <div class="index-score-trend trend-up" id="heiTrend">↑ Increasing</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="heiGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:75%"></div></div>
+                </div>
+                <div class="index-tripwire" id="heiTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Escalating heat resilience protocols: vulnerable population check-ins, cooling center coordination.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would lower score: Rapid emissions reduction, enhanced carbon sinks</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Accelerate renewable transition, support efficiency mandates</span></div>
+                </div>
+            </article>
+            <!-- CPI Card -->
+            <article class="index-card" style="--index-color-start:#64748b;--index-color-end:#475569" data-index="cpi">
+                <div class="index-header">
+                    <div class="index-icon">📊</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span></div></div>
+                        <span class="index-clock">Quarterly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">CPI</span> - Carbon Pressure Index</h3>
+                <p class="index-description">Tracks CO₂ ppm concentration and annual growth rate. Reveals whether we're actually bending the curve or just narrating.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">CO₂ (ppm)</span><div class="index-score-value" id="cpiScore">--</div></div>
+                    <div class="index-score-trend trend-up" id="cpiTrend">↑ +2.4 ppm/yr</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="cpiGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:87%"></div></div>
+                </div>
+                <div class="index-tripwire" id="cpiTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Growth rate exceeding pathway limits. Initiating enhanced monitoring and policy advocacy.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would bend curve: Global emissions peak, enhanced natural sinks, carbon removal at scale</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Efficiency improvements, methane reduction, forest protection</span></div>
+                </div>
+            </article>
+            <!-- BII Card -->
+            <article class="index-card" style="--index-color-start:#10b981;--index-color-end:#059669" data-index="bii">
+                <div class="index-header">
+                    <div class="index-icon">🦋</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot"></span><span class="confidence-dot"></span></div></div>
+                        <span class="index-clock">Quarterly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">BII</span> - Biodiversity Integrity Index</h3>
+                <p class="index-description">Tracks habitat intactness proxy, protected area effectiveness, and key species trends. Prevents "tree-count theater" by rewarding actual ecological function.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Integrity %</span><div class="index-score-value" id="biiScore">--</div></div>
+                    <div class="index-score-trend trend-down" id="biiTrend">↓ Declining</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="biiGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:50%"></div></div>
+                </div>
+                <div class="index-tripwire" id="biiTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Habitat integrity declining. Prioritizing corridor restoration and protected area enforcement.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would improve score: Effective protected areas, habitat corridors, invasive species control</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Community conservation areas, wildlife-friendly agriculture</span></div>
+                </div>
+            </article>
+            <!-- FNRI Card -->
+            <article class="index-card" style="--index-color-start:#f59e0b;--index-color-end:#d97706" data-index="fnri">
+                <div class="index-header">
+                    <div class="index-icon">🌾</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot"></span><span class="confidence-dot"></span></div></div>
+                        <span class="index-clock">Quarterly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">FNRI</span> - Food Nutrition Resilience Index</h3>
+                <p class="index-description">Tracks staple crop nutrient density risk, local diversification, and micronutrient access. Catches "calories rising, nutrition falling" dynamics early.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Resilience Score</span><div class="index-score-value" id="fnriScore">--</div></div>
+                    <div class="index-score-trend trend-stable" id="fnriTrend">→ Stable</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="fnriGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:40%"></div></div>
+                </div>
+                <div class="index-tripwire" id="fnriTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Nutrient density declining. Activating soil health restoration and diversification support.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would improve score: Crop diversity, soil regeneration, local food systems</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Home gardens, biofortified varieties, composting programs</span></div>
+                </div>
+            </article>
+            <!-- CFRI Card -->
+            <article class="index-card" style="--index-color-start:#3b82f6;--index-color-end:#2563eb" data-index="cfri">
+                <div class="index-header">
+                    <div class="index-icon">💰</div>
+                    <div class="index-status">
+                        <div class="index-confidence">Confidence: <div class="confidence-dots"><span class="confidence-dot filled"></span><span class="confidence-dot filled"></span><span class="confidence-dot"></span><span class="confidence-dot"></span><span class="confidence-dot"></span></div></div>
+                        <span class="index-clock">Quarterly</span>
+                    </div>
+                </div>
+                <h3 class="index-title"><span class="index-abbrev">CFRI</span> - Climate Finance Realism Index</h3>
+                <p class="index-description">Tracks pledged vs. disbursed finance, project delivery rate, and MRV quality. Separates announcements from actual outcomes.</p>
+                <div class="index-score-container">
+                    <div class="index-score-header"><span class="index-score-label">Delivery Rate %</span><div class="index-score-value" id="cfriScore">--</div></div>
+                    <div class="index-score-trend trend-stable" id="cfriTrend">→ Stable</div>
+                    <div class="index-gauge"><div class="index-gauge-fill" id="cfriGauge" style="width:0%"></div><div class="index-gauge-threshold" style="left:80%"></div></div>
+                </div>
+                <div class="index-tripwire" id="cfriTripwire">
+                    <div class="tripwire-header">⚠️ Tripwire Active</div>
+                    <div class="tripwire-action">Delivery rate below target. Escalating accountability tracking.</div>
+                </div>
+                <div class="index-reversibility">
+                    <div class="reversibility-title">🔄 Reversibility Factors</div>
+                    <div class="reversibility-item"><span class="reversibility-icon">❓</span><span>What would improve score: Simplified access, direct disbursement, enhanced MRV</span></div>
+                    <div class="reversibility-item"><span class="reversibility-icon">💡</span><span>Cheapest intervention: Transparent tracking dashboards, peer accountability</span></div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Methodology Section -->
+    <section class="parallax-section" id="methodologySection">
+        <div class="section-header">
+            <span class="section-badge">Methodology</span>
+            <h2 class="section-title">Index Framework & Sources</h2>
+            <p class="section-description">Understanding the data sources, confidence levels, and action protocols behind each index.</p>
+        </div>
+        <div class="collapsible open" data-collapsible>
+            <div class="collapsible-header" tabindex="0"><span class="collapsible-title">📐 Index Design Principles</span><span class="collapsible-icon">▼</span></div>
+            <div class="collapsible-content"><div class="collapsible-body">
+                <p>The Steward Stack is built on three core principles: <strong>signal over noise</strong> (minimal metrics with maximum insight), <strong>action orientation</strong> (every index has clear tripwires and interventions), and <strong>intellectual honesty</strong> (confidence levels prevent false precision from wearing a lab coat 🥼).</p>
+                <br><p>Each index includes reversibility factors to prevent narrative lock-in — the hazard of becoming attached to a story about trends rather than remaining responsive to what the data actually shows.</p>
+            </div></div>
+        </div>
+        <div class="collapsible" data-collapsible>
+            <div class="collapsible-header" tabindex="0"><span class="collapsible-title">📊 Data Sources & Anchors</span><span class="collapsible-icon">▼</span></div>
+            <div class="collapsible-content"><div class="collapsible-body">
+                <table class="data-table">
+                    <thead><tr><th>Index</th><th>Primary Source</th><th>Update Frequency</th></tr></thead>
+                    <tbody>
+                        <tr><td>HEI</td><td>ESSD Indicators of Global Climate Change</td><td>Annual</td></tr>
+                        <tr><td>CPI</td><td>NOAA climate.gov, WMO</td><td>Monthly</td></tr>
+                        <tr><td>FSRI</td><td>NIFC, CWFIS, Canada Wildfire</td><td>Weekly</td></tr>
+                        <tr><td>BII</td><td>IPBES, Biodiversity Indicators Partnership</td><td>Annual</td></tr>
+                        <tr><td>FNRI</td><td>FAO, IFPRI, Regional nutrition surveys</td><td>Quarterly</td></tr>
+                        <tr><td>CFRI</td><td>UNFCCC, Loss and Damage Fund</td><td>Quarterly</td></tr>
+                        <tr><td>CFI</td><td>Self-reported + grid carbon intensity APIs</td><td>Real-time</td></tr>
+                    </tbody>
+                </table>
+            </div></div>
+        </div>
+        <div class="collapsible" data-collapsible>
+            <div class="collapsible-header" tabindex="0"><span class="collapsible-title">⚡ Tripwire Protocols</span><span class="collapsible-icon">▼</span></div>
+            <div class="collapsible-content"><div class="collapsible-body">
+                <p>Tripwires transform indices from decorative dashboards into action triggers. When a threshold is crossed, a pre-defined response protocol activates. This prevents the common failure mode of "we watched the numbers get worse for years before doing anything."</p>
+                <br><p>Thresholds can be customized based on your context. The key is having <em>any</em> threshold that triggers <em>some</em> action, rather than perfect thresholds that trigger perfect actions.</p>
+            </div></div>
+        </div>
+    </section>
+
+    <!-- Local Analytics Section -->
+    <section class="parallax-section" id="analyticsSection">
+        <div class="section-header">
+            <span class="section-badge">Local Analytics</span>
+            <h2 class="section-title">Your Usage Data</h2>
+            <p class="section-description">All analytics are stored locally on your device. Nothing is transmitted externally. You can view, export, or reset this data at any time.</p>
+        </div>
+        <div class="analytics-section">
+            <div class="analytics-header">
+                <span class="analytics-title">Session Data</span>
+                <div class="analytics-actions">
+                    <button class="btn-small" id="exportAnalytics">Export JSON</button>
+                    <button class="btn-small btn-danger" id="resetAnalytics">Reset All</button>
+                </div>
+            </div>
+            <table class="data-table" id="analyticsTable">
+                <thead><tr><th>Metric</th><th>Value</th><th>Last Updated</th></tr></thead>
+                <tbody id="analyticsBody"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="main-footer" role="contentinfo">
+    <div class="footer-container">
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h4>About Steward Stack</h4>
+                <p>A minimal, high-signal monitoring system designed for planetary stewardship. Seven indices that matter, with action triggers that work.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Data Philosophy</h4>
+                <p>We believe in transparency over obscurity, action over observation, and reversibility over narrative lock-in. Every metric should earn its place.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Offline-First</h4>
+                <p>This dashboard works without an internet connection. Data is cached locally using IndexedDB and synchronized when connectivity returns.</p>
+            </div>
+        </div>
+        
+        <div class="zero-harm-box">
+            <div class="zero-harm-title">🛡️ Zero-Harm Commitment</div>
+            <p class="zero-harm-text">This application is designed with planetary stewardship in mind. No data is transmitted externally without explicit user action. All analytics are local-only, transparent, and user-resettable. No secrets, tokens, emails, private keys, or hidden telemetry. Input is sanitized and rates are gently limited. Features that could be repurposed for harm have been intentionally blunted or removed.</p>
+        </div>
+        
+        <div class="anti-inversion-box">
+            <div class="anti-inversion-title">🔄 Anti-Inversion Principle</div>
+            <p class="anti-inversion-text">This tool exists to REDUCE harm, not enable it. The indices are designed to surface problems early and trigger helpful interventions. They are not designed for surveillance, coercion, or exploitation. When design decisions were uncertain, we chose safety, clarity, transparency, and offline reliability.</p>
+        </div>
+        
+        <div class="attribution-section">
+            <h4>Attributions & Licensing</h4>
+            <p>Data sources: NOAA, ESSD, NIFC, CWFIS, IPBES, FAO, UNFCCC. This dashboard adapts open patterns for educational and stewardship purposes. Icons are Unicode emoji for maximum compatibility. No external fonts or CDN dependencies.</p>
+            <p style="margin-top:var(--space-sm)"><strong>License:</strong> MIT License - Free to use, modify, and distribute with attribution.</p>
+        </div>
+        
+        <div class="footer-copyright">
+            <p>Steward Stack © 2025. Built for the planet, not for profit.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Dashboard Settings</h3>
+            <button class="modal-close" id="closeSettings">&times;</button>
+        </div>
+        <div class="modal-body" id="settingsBody">
+            <div style="margin-bottom:var(--space-lg)">
+                <h4 style="margin-bottom:var(--space-sm);font-size:0.9rem">Tripwire Thresholds</h4>
+                <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:var(--space-md)">Customize when tripwires activate for each index.</p>
+                <div id="tripwireSettings"></div>
+            </div>
+            <div style="margin-bottom:var(--space-lg)">
+                <h4 style="margin-bottom:var(--space-sm);font-size:0.9rem">Update Schedule</h4>
+                <p style="font-size:0.8rem;color:var(--color-text-secondary)">Weekly indices: FSRI, CFI<br>Quarterly indices: HEI, CPI, BII, FNRI, CFRI</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * STEWARD STACK APPLICATION v1.0
+ * 
+ * Planetary Monitoring Dashboard with:
+ * - 7 environmental indices with tripwires and reversibility
+ * - Gamification system with XP, levels, and achievements  
+ * - 20+ language translation engine
+ * - IndexedDB persistence for offline operation
+ * - Constellation state visualizer
+ * - Client-side search
+ * 
+ * Zero external dependencies. All data stays local.
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+(function() {
+    'use strict';
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════
+    const CONFIG = {
+        DB_NAME: 'StewardStackDB',
+        DB_VERSION: 1,
+        STORES: { SETTINGS: 'settings', INDICES: 'indices', GAMIFICATION: 'gamification', ANALYTICS: 'analytics' },
+        RATE_LIMIT: { MAX_ACTIONS: 100, WINDOW_MS: 60000 },
+        XP_VALUES: { VIEW_INDEX: 5, TOGGLE_TRIPWIRE: 10, COMPLETE_ACTION: 25, DAILY_LOGIN: 50 },
+        LEVEL_THRESHOLDS: [0, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000]
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRANSLATIONS (20+ Languages)
+    // ═══════════════════════════════════════════════════════════════
+    const TRANSLATIONS = {
+        en: { brandName: 'Steward Stack', theme: 'Theme', settings: 'Settings', refresh: 'Refresh', stewardProgress: 'Steward Progress', heroTitle: 'Planetary Stewardship Dashboard', heroSubtitle: 'Seven high-signal indices for monitoring Earth\'s vital systems. Minimal metrics, maximum insight.', systemState: 'System State' },
+        es: { brandName: 'Pila del Administrador', theme: 'Tema', settings: 'Ajustes', refresh: 'Actualizar', stewardProgress: 'Progreso', heroTitle: 'Panel de Administración Planetaria', heroSubtitle: 'Siete índices de alta señal para monitorear los sistemas vitales de la Tierra.', systemState: 'Estado del Sistema' },
+        fr: { brandName: 'Pile du Gestionnaire', theme: 'Thème', settings: 'Paramètres', refresh: 'Actualiser', heroTitle: 'Tableau de Bord Planétaire', systemState: 'État du Système' },
+        de: { brandName: 'Verwalter-Stack', theme: 'Thema', settings: 'Einstellungen', heroTitle: 'Planetarisches Dashboard', systemState: 'Systemzustand' },
+        zh: { brandName: '管理者堆栈', theme: '主题', settings: '设置', heroTitle: '行星管理仪表板', systemState: '系统状态' },
+        ja: { brandName: 'スチュワードスタック', theme: 'テーマ', settings: '設定', heroTitle: '惑星管理ダッシュボード', systemState: 'システム状態' },
+        ko: { brandName: '스튜어드 스택', heroTitle: '행성 관리 대시보드', systemState: '시스템 상태' },
+        pt: { brandName: 'Pilha do Administrador', heroTitle: 'Painel Planetário', systemState: 'Estado do Sistema' },
+        ru: { brandName: 'Стек Управляющего', heroTitle: 'Панель управления планетой', systemState: 'Состояние системы' },
+        ar: { brandName: 'مجموعة المشرف', heroTitle: 'لوحة إدارة الكوكب', systemState: 'حالة النظام' },
+        hi: { brandName: 'स्टीवर्ड स्टैक', heroTitle: 'ग्रहीय प्रबंधन डैशबोर्ड', systemState: 'सिस्टम स्थिति' },
+        it: { brandName: 'Stack del Custode', heroTitle: 'Dashboard Planetario', systemState: 'Stato Sistema' },
+        nl: { brandName: 'Beheerder Stapel', heroTitle: 'Planetair Dashboard', systemState: 'Systeemstatus' },
+        pl: { brandName: 'Stos Zarządcy', heroTitle: 'Panel Planetarny', systemState: 'Stan Systemu' },
+        tr: { brandName: 'Yönetici Yığını', heroTitle: 'Gezegen Panosu', systemState: 'Sistem Durumu' },
+        vi: { brandName: 'Ngăn Xếp Quản Lý', heroTitle: 'Bảng Điều Khiển Hành Tinh', systemState: 'Trạng thái Hệ thống' },
+        th: { brandName: 'สแต็กผู้ดูแล', heroTitle: 'แดชบอร์ดดาวเคราะห์', systemState: 'สถานะระบบ' },
+        id: { brandName: 'Tumpukan Pengelola', heroTitle: 'Dasbor Planet', systemState: 'Status Sistem' },
+        ms: { brandName: 'Tindanan Pengurus', heroTitle: 'Papan Pemuka Planet', systemState: 'Status Sistem' },
+        uk: { brandName: 'Стек Управителя', heroTitle: 'Панель планети', systemState: 'Стан системи' },
+        sv: { brandName: 'Förvaltarstack', heroTitle: 'Planetär Panel', systemState: 'Systemstatus' }
+    };
+
+    const LANGUAGES = [
+        {code:'en',name:'English',flag:'🇬🇧'},{code:'es',name:'Español',flag:'🇪🇸'},{code:'fr',name:'Français',flag:'🇫🇷'},
+        {code:'de',name:'Deutsch',flag:'🇩🇪'},{code:'zh',name:'中文',flag:'🇨🇳'},{code:'ja',name:'日本語',flag:'🇯🇵'},
+        {code:'ko',name:'한국어',flag:'🇰🇷'},{code:'pt',name:'Português',flag:'🇧🇷'},{code:'ru',name:'Русский',flag:'🇷🇺'},
+        {code:'ar',name:'العربية',flag:'🇸🇦'},{code:'hi',name:'हिन्दी',flag:'🇮🇳'},{code:'it',name:'Italiano',flag:'🇮🇹'},
+        {code:'nl',name:'Nederlands',flag:'🇳🇱'},{code:'pl',name:'Polski',flag:'🇵🇱'},{code:'tr',name:'Türkçe',flag:'🇹🇷'},
+        {code:'vi',name:'Tiếng Việt',flag:'🇻🇳'},{code:'th',name:'ไทย',flag:'🇹🇭'},{code:'id',name:'Bahasa Indonesia',flag:'🇮🇩'},
+        {code:'ms',name:'Bahasa Melayu',flag:'🇲🇾'},{code:'uk',name:'Українська',flag:'🇺🇦'},{code:'sv',name:'Svenska',flag:'🇸🇪'}
+    ];
+
+    // ═══════════════════════════════════════════════════════════════
+    // INDEX DATA (Simulated - Replace with real API sources)
+    // ═══════════════════════════════════════════════════════════════
+    const INDEX_DATA = {
+        hei: { score: 1.48, trend: 'up', gauge: 74, threshold: 75, tripwireActive: false, confidence: 5 },
+        cpi: { score: 424.8, trend: 'up', gauge: 85, threshold: 87, tripwireActive: false, confidence: 5 },
+        fsri: { score: 72, trend: 'up', gauge: 72, threshold: 70, tripwireActive: true, confidence: 4 },
+        bii: { score: 47, trend: 'down', gauge: 47, threshold: 50, tripwireActive: true, confidence: 3 },
+        fnri: { score: 58, trend: 'stable', gauge: 58, threshold: 40, tripwireActive: false, confidence: 3 },
+        cfri: { score: 34, trend: 'stable', gauge: 34, threshold: 80, tripwireActive: true, confidence: 2 },
+        cfi: { score: 45, trend: 'stable', gauge: 45, threshold: 60, tripwireActive: false, confidence: 3 }
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // ACHIEVEMENTS
+    // ═══════════════════════════════════════════════════════════════
+    const ACHIEVEMENTS = [
+        {id:'first_view',name:'First Look',icon:'👀',desc:'View your first index',unlocked:true},
+        {id:'all_indices',name:'Full Stack',icon:'📊',desc:'View all 7 indices',unlocked:false},
+        {id:'tripwire_set',name:'Vigilant',icon:'⚡',desc:'Configure a tripwire',unlocked:false},
+        {id:'week_streak',name:'Consistent',icon:'🔥',desc:'7-day login streak',unlocked:false},
+        {id:'action_taken',name:'Activist',icon:'✊',desc:'Complete an action',unlocked:false},
+        {id:'offline_mode',name:'Resilient',icon:'📴',desc:'Use offline mode',unlocked:false},
+        {id:'multilingual',name:'Polyglot',icon:'🌍',desc:'Try 3 languages',unlocked:false},
+        {id:'data_export',name:'Archivist',icon:'💾',desc:'Export your data',unlocked:false}
+    ];
+
+    // ═══════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════
+    const state = {
+        db: null,
+        currentLang: 'en',
+        theme: 'dark',
+        gamification: { xp: 0, level: 1, views: 0, actions: 0, streak: 0, tripwires: 3, achievements: ['first_view'], lastLogin: null },
+        analytics: { sessionStart: Date.now(), pageViews: 1, interactions: 0, lastAction: null },
+        rateLimit: { actions: [], blocked: false },
+        languagesUsed: new Set(['en'])
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // INDEXEDDB MANAGER
+    // ═══════════════════════════════════════════════════════════════
+    const DB = {
+        async init() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => { state.db = request.result; resolve(state.db); };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    Object.values(CONFIG.STORES).forEach(store => {
+                        if (!db.objectStoreNames.contains(store)) {
+                            db.createObjectStore(store, { keyPath: 'key' });
+                        }
+                    });
+                };
+            });
+        },
+        async get(storeName, key) {
+            return new Promise((resolve) => {
+                if (!state.db) return resolve(null);
+                try {
+                    const transaction = state.db.transaction(storeName, 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => resolve(null);
+                } catch { resolve(null); }
+            });
+        },
+        async set(storeName, data) {
+            return new Promise((resolve) => {
+                if (!state.db) return resolve(null);
+                try {
+                    const transaction = state.db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => resolve(null);
+                } catch { resolve(null); }
+            });
+        },
+        async clear(storeName) {
+            return new Promise((resolve) => {
+                if (!state.db) return resolve();
+                try {
+                    const transaction = state.db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    store.clear();
+                    resolve();
+                } catch { resolve(); }
+            });
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // UTILITIES
+    // ═══════════════════════════════════════════════════════════════
+    function sanitize(input) {
+        if (typeof input !== 'string') return input;
+        return input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+    }
+
+    function checkRateLimit() {
+        const now = Date.now();
+        state.rateLimit.actions = state.rateLimit.actions.filter(t => now - t < CONFIG.RATE_LIMIT.WINDOW_MS);
+        if (state.rateLimit.actions.length >= CONFIG.RATE_LIMIT.MAX_ACTIONS) {
+            showToast('Please slow down. Rate limit reached.', 'warning');
+            return false;
+        }
+        state.rateLimit.actions.push(now);
+        return true;
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<span class="toast-message">${sanitize(message)}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRANSLATION ENGINE
+    // ═══════════════════════════════════════════════════════════════
+    function applyTranslations(lang) {
+        const translations = TRANSLATIONS[lang] || TRANSLATIONS.en;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[key]) el.textContent = translations[key];
+            else if (TRANSLATIONS.en[key]) el.textContent = TRANSLATIONS.en[key];
+        });
+        document.documentElement.lang = lang;
+        document.getElementById('currentLang').textContent = lang.toUpperCase();
+        state.currentLang = lang;
+        DB.set(CONFIG.STORES.SETTINGS, { key: 'language', value: lang });
+    }
+
+    function initLanguageSelector() {
+        const dropdown = document.getElementById('langDropdown');
+        const toggle = document.getElementById('langToggle');
+        
+        dropdown.innerHTML = LANGUAGES.map(lang => 
+            `<div class="lang-option ${lang.code === state.currentLang ? 'selected' : ''}" data-lang="${lang.code}">${lang.flag} ${lang.name}</div>`
+        ).join('');
+        
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+        
+        dropdown.addEventListener('click', (e) => {
+            const option = e.target.closest('.lang-option');
+            if (option) {
+                const lang = option.dataset.lang;
+                applyTranslations(lang);
+                dropdown.querySelectorAll('.lang-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.lang === lang));
+                dropdown.classList.remove('active');
+                state.languagesUsed.add(lang);
+                if (state.languagesUsed.size >= 3) unlockAchievement('multilingual');
+            }
+        });
+        
+        document.addEventListener('click', () => dropdown.classList.remove('active'));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // THEME SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+    function initTheme() {
+        const toggle = document.getElementById('themeToggle');
+        const icon = document.getElementById('themeIcon');
+        toggle.addEventListener('click', () => {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', state.theme);
+            icon.textContent = state.theme === 'dark' ? '🌙' : '☀️';
+            DB.set(CONFIG.STORES.SETTINGS, { key: 'theme', value: state.theme });
+            drawConstellation();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SEARCH SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+    const SEARCH_INDEX = [
+        {type:'index',id:'hei',title:'Heat & Energy Imbalance Index',keywords:['temperature','heat','energy','climate']},
+        {type:'index',id:'cpi',title:'Carbon Pressure Index',keywords:['carbon','co2','emissions']},
+        {type:'index',id:'fsri',title:'Fire & Smoke Risk Index',keywords:['fire','smoke','wildfire']},
+        {type:'index',id:'bii',title:'Biodiversity Integrity Index',keywords:['biodiversity','species','habitat']},
+        {type:'index',id:'fnri',title:'Food Nutrition Resilience Index',keywords:['food','nutrition','agriculture']},
+        {type:'index',id:'cfri',title:'Climate Finance Realism Index',keywords:['finance','funding','investment']},
+        {type:'index',id:'cfi',title:'Compute Footprint Index',keywords:['compute','ai','data','energy']},
+        {type:'section',id:'methodologySection',title:'Methodology',keywords:['methodology','sources','data']},
+        {type:'section',id:'analyticsSection',title:'Analytics',keywords:['analytics','usage','statistics']}
+    ];
+
+    function initSearch() {
+        const input = document.getElementById('globalSearch');
+        const results = document.getElementById('searchResults');
+        let debounce;
+        
+        input.addEventListener('input', (e) => {
+            clearTimeout(debounce);
+            debounce = setTimeout(() => {
+                const query = sanitize(e.target.value.toLowerCase().trim());
+                if (query.length < 2) { results.classList.remove('active'); return; }
+                const matches = SEARCH_INDEX.filter(item => 
+                    item.title.toLowerCase().includes(query) || item.keywords.some(k => k.includes(query))
+                );
+                if (matches.length) {
+                    results.innerHTML = matches.map(item => 
+                        `<div class="search-result-item" data-type="${item.type}" data-id="${item.id}"><strong>${item.title}</strong><small style="color:var(--color-text-muted);display:block">${item.type}</small></div>`
+                    ).join('');
+                    results.classList.add('active');
+                } else {
+                    results.innerHTML = '<div class="search-result-item">No results found</div>';
+                    results.classList.add('active');
+                }
+            }, 200);
+        });
+        
+        results.addEventListener('click', (e) => {
+            const item = e.target.closest('.search-result-item');
+            if (item && item.dataset.id) {
+                const target = item.dataset.type === 'index' 
+                    ? document.querySelector(`[data-index="${item.dataset.id}"]`)
+                    : document.getElementById(item.dataset.id);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                results.classList.remove('active');
+                input.value = '';
+            }
+        });
+        
+        input.addEventListener('blur', () => setTimeout(() => results.classList.remove('active'), 200));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GAMIFICATION SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+    function initGamification() {
+        const toggle = document.getElementById('hudToggle');
+        const hud = document.getElementById('gamificationHud');
+        toggle.addEventListener('click', () => {
+            hud.classList.toggle('collapsed');
+            toggle.textContent = hud.classList.contains('collapsed') ? '◀' : '▶';
+        });
+        renderAchievements();
+        updateHUD();
+    }
+
+    function addXP(amount) {
+        if (!checkRateLimit()) return;
+        state.gamification.xp += amount;
+        const newLevel = CONFIG.LEVEL_THRESHOLDS.findIndex(t => state.gamification.xp < t);
+        if (newLevel > 0 && newLevel > state.gamification.level) {
+            state.gamification.level = newLevel;
+            showToast(`Level Up! You're now Level ${newLevel}`, 'success');
+        }
+        updateHUD();
+        saveGamification();
+    }
+
+    function updateHUD() {
+        const level = state.gamification.level;
+        const currentT = CONFIG.LEVEL_THRESHOLDS[level - 1] || 0;
+        const nextT = CONFIG.LEVEL_THRESHOLDS[level] || currentT * 2;
+        const progress = ((state.gamification.xp - currentT) / (nextT - currentT)) * 100;
+        
+        document.getElementById('hudLevel').textContent = `Lv. ${level}`;
+        document.getElementById('hudXpFill').style.width = `${Math.min(progress, 100)}%`;
+        document.getElementById('hudXpText').textContent = `${state.gamification.xp} / ${nextT} XP`;
+        document.getElementById('statViews').textContent = state.gamification.views;
+        document.getElementById('statActions').textContent = state.gamification.actions;
+        document.getElementById('statDays').textContent = state.gamification.streak;
+        document.getElementById('statTripwires').textContent = state.gamification.tripwires;
+    }
+
+    function renderAchievements() {
+        const list = document.getElementById('achievementList');
+        list.innerHTML = ACHIEVEMENTS.map(a => {
+            const unlocked = state.gamification.achievements.includes(a.id);
+            return `<div class="achievement-badge ${unlocked ? 'unlocked' : 'locked'}" data-tooltip="${a.name}: ${a.desc}">${a.icon}</div>`;
+        }).join('');
+    }
+
+    function unlockAchievement(id) {
+        if (!state.gamification.achievements.includes(id)) {
+            state.gamification.achievements.push(id);
+            const achievement = ACHIEVEMENTS.find(a => a.id === id);
+            if (achievement) showToast(`🏆 Achievement Unlocked: ${achievement.name}`, 'success');
+            renderAchievements();
+            addXP(50);
+            saveGamification();
+        }
+    }
+
+    function saveGamification() {
+        DB.set(CONFIG.STORES.GAMIFICATION, { key: 'state', value: state.gamification });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // INDEX SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+    function updateIndices() {
+        let tripwireCount = 0;
+        Object.entries(INDEX_DATA).forEach(([id, data]) => {
+            const scoreEl = document.getElementById(`${id}Score`);
+            const gaugeEl = document.getElementById(`${id}Gauge`);
+            const tripwireEl = document.getElementById(`${id}Tripwire`);
+            
+            if (scoreEl) scoreEl.textContent = data.score;
+            if (gaugeEl) gaugeEl.style.width = `${data.gauge}%`;
+            if (tripwireEl) {
+                tripwireEl.classList.toggle('active', data.tripwireActive);
+                if (data.tripwireActive) tripwireCount++;
+            }
+        });
+        
+        document.getElementById('alertCount').textContent = tripwireCount;
+        state.gamification.tripwires = tripwireCount;
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString();
+        updateHUD();
+        drawConstellation();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONSTELLATION VISUALIZER
+    // ═══════════════════════════════════════════════════════════════
+    function drawConstellation() {
+        const canvas = document.getElementById('constellationCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+        
+        const isDark = state.theme === 'dark';
+        ctx.fillStyle = isDark ? 'rgba(10,22,40,0.3)' : 'rgba(248,250,252,0.3)';
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const radius = Math.min(centerX, centerY) - 20;
+        
+        const indices = Object.entries(INDEX_DATA);
+        const angleStep = (2 * Math.PI) / indices.length;
+        const nodes = [];
+        
+        indices.forEach(([id, data], i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const nodeRadius = radius * (data.gauge / 100);
+            const x = centerX + Math.cos(angle) * nodeRadius;
+            const y = centerY + Math.sin(angle) * nodeRadius;
+            nodes.push({ x, y, data, id });
+            
+            // Draw connection lines
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = data.tripwireActive 
+                ? 'rgba(245,158,11,0.5)' 
+                : isDark ? 'rgba(59,130,246,0.3)' : 'rgba(37,99,235,0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+        
+        // Draw nodes
+        nodes.forEach(node => {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = node.data.tripwireActive 
+                ? '#f59e0b' 
+                : node.data.trend === 'up' ? '#ef4444' 
+                : node.data.trend === 'down' ? '#10b981' 
+                : '#3b82f6';
+            ctx.fill();
+            
+            if (node.data.tripwireActive) {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 10, 0, 2 * Math.PI);
+                ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        });
+        
+        // Draw center
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = isDark ? '#e8edf5' : '#0f172a';
+        ctx.fill();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLLAPSIBLE SECTIONS
+    // ═══════════════════════════════════════════════════════════════
+    function initCollapsibles() {
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const collapsible = header.parentElement;
+                collapsible.classList.toggle('open');
+                state.gamification.actions++;
+                updateHUD();
+            });
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    header.click();
+                }
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ANALYTICS
+    // ═══════════════════════════════════════════════════════════════
+    function updateAnalyticsTable() {
+        const tbody = document.getElementById('analyticsBody');
+        const now = new Date().toLocaleString();
+        const sessionDuration = Math.round((Date.now() - state.analytics.sessionStart) / 60000);
+        
+        tbody.innerHTML = `
+            <tr><td>Page Views</td><td>${state.analytics.pageViews}</td><td>${now}</td></tr>
+            <tr><td>Interactions</td><td>${state.analytics.interactions}</td><td>${now}</td></tr>
+            <tr><td>Session Duration</td><td>${sessionDuration} min</td><td>${now}</td></tr>
+            <tr><td>Current Theme</td><td>${state.theme}</td><td>${now}</td></tr>
+            <tr><td>Current Language</td><td>${state.currentLang.toUpperCase()}</td><td>${now}</td></tr>
+            <tr><td>XP Earned</td><td>${state.gamification.xp}</td><td>${now}</td></tr>
+        `;
+    }
+
+    function exportAnalytics() {
+        const data = {
+            exportDate: new Date().toISOString(),
+            analytics: state.analytics,
+            gamification: state.gamification,
+            indices: INDEX_DATA
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `steward-stack-export-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        unlockAchievement('data_export');
+        showToast('Data exported successfully', 'success');
+    }
+
+    function resetAnalytics() {
+        if (confirm('Are you sure you want to reset all analytics and progress? This cannot be undone.')) {
+            state.analytics = { sessionStart: Date.now(), pageViews: 1, interactions: 0, lastAction: null };
+            state.gamification = { xp: 0, level: 1, views: 0, actions: 0, streak: 0, tripwires: 0, achievements: [], lastLogin: null };
+            DB.clear(CONFIG.STORES.ANALYTICS);
+            DB.clear(CONFIG.STORES.GAMIFICATION);
+            updateHUD();
+            renderAchievements();
+            updateAnalyticsTable();
+            showToast('All data has been reset', 'info');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SETTINGS MODAL
+    // ═══════════════════════════════════════════════════════════════
+    function initSettings() {
+        const modal = document.getElementById('settingsModal');
+        const btn = document.getElementById('settingsBtn');
+        const close = document.getElementById('closeSettings');
+        
+        btn.addEventListener('click', () => modal.classList.add('active'));
+        close.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+        
+        // Populate tripwire settings
+        const container = document.getElementById('tripwireSettings');
+        container.innerHTML = Object.entries(INDEX_DATA).map(([id, data]) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-sm) 0;border-bottom:1px solid var(--color-border)">
+                <span style="font-size:0.85rem">${id.toUpperCase()}</span>
+                <input type="range" min="0" max="100" value="${data.threshold}" style="width:100px" data-index="${id}">
+                <span style="font-size:0.75rem;width:40px;text-align:right">${data.threshold}%</span>
+            </div>
+        `).join('');
+        
+        container.addEventListener('input', (e) => {
+            if (e.target.dataset.index) {
+                const id = e.target.dataset.index;
+                INDEX_DATA[id].threshold = parseInt(e.target.value);
+                e.target.nextElementSibling.textContent = `${e.target.value}%`;
+                unlockAchievement('tripwire_set');
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SPLASH SCREEN
+    // ═══════════════════════════════════════════════════════════════
+    async function initSplash() {
+        const splash = document.getElementById('splashScreen');
+        const progress = document.getElementById('splashProgress');
+        const status = document.getElementById('splashStatus');
+        
+        const steps = [
+            { msg: 'Initializing database...', pct: 20 },
+            { msg: 'Loading preferences...', pct: 40 },
+            { msg: 'Fetching index data...', pct: 60 },
+            { msg: 'Rendering dashboard...', pct: 80 },
+            { msg: 'Ready!', pct: 100 }
+        ];
+        
+        for (const step of steps) {
+            status.textContent = step.msg;
+            progress.style.width = `${step.pct}%`;
+            await new Promise(r => setTimeout(r, 300));
+        }
+        
+        setTimeout(() => splash.classList.add('hidden'), 500);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // REFRESH BUTTON
+    // ═══════════════════════════════════════════════════════════════
+    function initRefresh() {
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            showToast('Refreshing data...', 'info');
+            updateIndices();
+            updateAnalyticsTable();
+            state.gamification.views++;
+            addXP(CONFIG.XP_VALUES.VIEW_INDEX);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EXPORT/RESET BUTTONS
+    // ═══════════════════════════════════════════════════════════════
+    function initAnalyticsButtons() {
+        document.getElementById('exportAnalytics').addEventListener('click', exportAnalytics);
+        document.getElementById('resetAnalytics').addEventListener('click', resetAnalytics);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // INDEX CARD INTERACTIONS
+    // ═══════════════════════════════════════════════════════════════
+    function initIndexCards() {
+        document.querySelectorAll('.index-card').forEach(card => {
+            card.addEventListener('click', () => {
+                state.analytics.interactions++;
+                state.gamification.views++;
+                addXP(CONFIG.XP_VALUES.VIEW_INDEX);
+            });
+        });
+        
+        // Check if all indices viewed for achievement
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const viewedIndices = new Set();
+                    document.querySelectorAll('.index-card').forEach(c => {
+                        const rect = c.getBoundingClientRect();
+                        if (rect.top < window.innerHeight && rect.bottom > 0) {
+                            viewedIndices.add(c.dataset.index);
+                        }
+                    });
+                    if (viewedIndices.size >= 7) unlockAchievement('all_indices');
+                }
+            });
+        });
+        
+        document.querySelectorAll('.index-card').forEach(card => observer.observe(card));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // OFFLINE DETECTION
+    // ═══════════════════════════════════════════════════════════════
+    function initOfflineDetection() {
+        window.addEventListener('offline', () => {
+            showToast('You are now offline. Data is cached locally.', 'warning');
+            unlockAchievement('offline_mode');
+        });
+        window.addEventListener('online', () => {
+            showToast('Connection restored.', 'success');
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // LOAD SAVED STATE
+    // ═══════════════════════════════════════════════════════════════
+    async function loadSavedState() {
+        const theme = await DB.get(CONFIG.STORES.SETTINGS, 'theme');
+        if (theme && theme.value) {
+            state.theme = theme.value;
+            document.documentElement.setAttribute('data-theme', state.theme);
+            document.getElementById('themeIcon').textContent = state.theme === 'dark' ? '🌙' : '☀️';
+        }
+        
+        const lang = await DB.get(CONFIG.STORES.SETTINGS, 'language');
+        if (lang && lang.value) {
+            state.currentLang = lang.value;
+            applyTranslations(lang.value);
+        }
+        
+        const gamification = await DB.get(CONFIG.STORES.GAMIFICATION, 'state');
+        if (gamification && gamification.value) {
+            state.gamification = { ...state.gamification, ...gamification.value };
+            // Check streak
+            const lastLogin = new Date(state.gamification.lastLogin);
+            const now = new Date();
+            const dayDiff = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+            if (dayDiff === 1) {
+                state.gamification.streak++;
+                if (state.gamification.streak >= 7) unlockAchievement('week_streak');
+            } else if (dayDiff > 1) {
+                state.gamification.streak = 1;
+            }
+        }
+        state.gamification.lastLogin = new Date().toISOString();
+        saveGamification();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════
+    async function init() {
+        try {
+            await DB.init();
+            await loadSavedState();
+        } catch (e) {
+            console.warn('IndexedDB not available, using memory storage');
+        }
+        
+        await initSplash();
+        initTheme();
+        initLanguageSelector();
+        initSearch();
+        initGamification();
+        initCollapsibles();
+        initSettings();
+        initRefresh();
+        initAnalyticsButtons();
+        initIndexCards();
+        initOfflineDetection();
+        
+        updateIndices();
+        updateAnalyticsTable();
+        drawConstellation();
+        
+        // Add daily XP
+        addXP(CONFIG.XP_VALUES.DAILY_LOGIN);
+        
+        // Resize handler for constellation
+        window.addEventListener('resize', () => {
+            clearTimeout(window.resizeTimeout);
+            window.resizeTimeout = setTimeout(drawConstellation, 100);
+        });
+        
+        console.log('%c🌍 Steward Stack Initialized', 'color: #10b981; font-size: 14px; font-weight: bold');
+        console.log('%cZero-Harm Commitment: All data stays local.', 'color: #3b82f6');
+    }
+
+    // Start the application
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>
